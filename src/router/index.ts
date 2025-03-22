@@ -25,6 +25,11 @@ const routes: Array<RouteRecordRaw> = [
     name: "UpdatePassword",
     component: () => import("../views/UpdatePassword/index.vue"),
   },
+  {
+    path: "/edit/:id",
+    name: "Edit",
+    component: () => import("../views/Edit/index.vue"),
+  },
 ];
 
 const router = createRouter({
