@@ -1,10 +1,10 @@
 <template>
   <div class="examList-container">
     <div class="header">
-      <h1>考试系统</h1>
+      <p class="text-4xl text-center m-10">考试系统</p>
     </div>
     <div class="wrapper">
-      <div class="operate">
+      <div class="p-5">
         <el-button type="primary" @click="openDialog">新建试卷</el-button>
         <el-button type="primary" @click="handleShowTrash">{{
           showTrashList ? "退出回收站" : "打开回收站"
@@ -12,16 +12,26 @@
       </div>
 
       <div class="list">
-        <div class="item" v-for="exam in list" :key="exam.id">
+        <div
+          class="min-h-[100px] border p-5 mb-7"
+          v-for="exam in list"
+          :key="exam.id"
+        >
           <p>{{ exam.name }}</p>
           <div class="btns">
             <el-button
-              class="btn"
+              class="m-2"
               type="primary"
               @click="handlePublish(exam)"
               >{{ exam.isPublish ? "停止" : "发布" }}</el-button
             >
-            <el-button class="btn">编辑</el-button>
+            <RouterLink :to="`/edit/${exam.id}`">
+              <el-button class="m-2">编辑</el-button>
+            </RouterLink>
+
+            <RouterLink :to="`/exam/${exam.id}`" v-if="exam.content && exam.isPublish">
+              <el-button class="m-2" type="success">去考试</el-button>
+            </RouterLink>
 
             <el-popconfirm
               v-if="!exam.isDelete"
@@ -93,38 +103,3 @@ const handleShowTrash = () => {
   getList(showTrashList.value);
 };
 </script>
-
-<style lang="scss" scoped>
-.examList-container {
-  .header {
-    height: 80px;
-    border-bottom: 1px solid #aaa;
-    line-height: 80px;
-  }
-
-  h1 {
-    margin: 0;
-  }
-
-  .wrapper {
-    .operate {
-      padding: 20px;
-    }
-
-    .list {
-      .item {
-        min-height: 100px;
-        border: 1px solid #000;
-        padding: 20px;
-        margin-bottom: 20px;
-
-        .btns {
-          .btn {
-            margin: 10px;
-          }
-        }
-      }
-    }
-  }
-}
-</style>

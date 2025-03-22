@@ -93,5 +93,3 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   });
 };
 </script>
-
-<style lang="scss" scoped></style>

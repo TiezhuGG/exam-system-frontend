@@ -1,8 +1,14 @@
 <template>
   <div class="edit-container">
     <div class="header">
-      <div>试卷编辑器</div>
-      <el-button type="primary">预览</el-button>
+      <div class="flex items-center">
+        <el-button @click="router.back()">返回</el-button>
+        <p class="ml-5">试卷编辑器</p>
+      </div>
+      <div>
+        <!-- <el-button>预览</el-button> -->
+        <el-button type="primary" @click="saveExamContent">保存</el-button>
+      </div>
     </div>
     <div class="body">
       <div class="materials">
@@ -22,13 +28,13 @@
         @drop="handleDrop"
       >
         <div
-          class="question-item flex flex-col mb-5 cursor-pointer"
+          class="question-item flex flex-col mb-5 cursor-pointer border-b pb-5"
           :class="{ active: selectedQuestion?.id === item.id }"
           v-for="item in json"
           :key="item.id"
           @click.stop="handleSelectQuestion(item)"
         >
-          <p>{{ item.question }}</p>
+          <p>{{ item.question || "请输入问题" }}</p>
           <template v-if="item.type === 'radio'">
             <el-radio-group v-model="item.userAnswer">
               <el-radio
@@ -64,6 +70,14 @@
             <p>答案：{{ item.answer }}</p>
             <p>答案解析：{{ item.answerAnalyze }}</p>
           </template>
+          <div class="text-right">
+            <el-button
+              type="danger"
+              :icon="Delete"
+              circle
+              @click.stop="onDeleteQuestion(item.id)"
+            />
+          </div>
         </div>
       </div>
       <div class="setting">
@@ -89,7 +103,10 @@
                 </el-form-item>
 
                 <el-form-item label="问题描述">
-                  <el-input v-model="selectedQuestion.question" />
+                  <el-input
+                    v-model="selectedQuestion.question"
+                    placeholder="请输入问题"
+                  />
                 </el-form-item>
 
                 <el-form-item label="分值">
@@ -97,13 +114,17 @@
                 </el-form-item>
 
                 <el-form-item label="答案">
-                  <el-input v-model="selectedQuestion.answer" />
+                  <el-input
+                    v-model="selectedQuestion.answer"
+                    placeholder="请输入答案"
+                  />
                 </el-form-item>
 
                 <el-form-item label="答案解析">
                   <el-input
                     v-model="selectedQuestion.answerAnalyze"
                     type="textarea"
+                    placeholder="请输入答案解析"
                   />
                 </el-form-item>
 
@@ -142,20 +163,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue";
-
-type QuestionTypes = "radio" | "checkbox" | "input";
-
-export type Question = {
-  id: number;
-  question: string;
-  type: QuestionTypes;
-  options?: string[];
-  score: number;
-  answer: string;
-  answerAnalyze: string;
-  userAnswer?: string | string[];
-};
+import { onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { examFind, examSave } from "../../api";
+import { ElMessage } from "element-plus";
+import { Delete } from "@element-plus/icons-vue";
+import type { Question, QuestionTypes } from "../../types/exam";
 
 const materialTypes = ref([
   { type: "radio", label: "单选题" },
@@ -184,21 +197,23 @@ watch(
         if (!updatedQuestion.options) {
           updatedQuestion.options = ["选项1", "选项2"];
         }
+        if (newType === "radio") {
+          updatedQuestion.userAnswer = Array.isArray(updatedQuestion.userAnswer)
+            ? ""
+            : updatedQuestion.userAnswer;
+        }
+
         if (newType === "checkbox") {
-          updatedQuestion.userAnswer = [];
+          updatedQuestion.userAnswer = updatedQuestion.userAnswer || [];
         }
       } else if (newType === "input") {
         delete updatedQuestion.options;
       }
 
-      updatedQuestion.question = `请填写${
-        materialTypes.value.find((item) => item.type === newType)?.label
-      }问题`;
-
       const index = json.value.findIndex(
         (item) => item.id === updatedQuestion?.id
       );
-      
+
       if (index !== -1) {
         json.value.splice(index, 1, { ...updatedQuestion });
         selectedQuestion.value = json.value[index];
@@ -245,9 +260,7 @@ const handleDrop = (event: DragEvent) => {
 const createNewQuestion = (type: QuestionTypes) => {
   const newQuestion: Question = {
     id: new Date().getTime(), // 生成唯一ID
-    question: `请填写${
-      materialTypes.value.find((item) => item.type === type)?.label
-    }问题`,
+    question: "",
     type,
     options: type === "input" ? undefined : ["选项1", "选项2"], // 填空题没有选项
     score: 5, // 默认分值
@@ -258,6 +271,35 @@ const createNewQuestion = (type: QuestionTypes) => {
 
   return newQuestion;
 };
+
+const router = useRouter();
+const { id } = useRoute().params;
+
+const findExam = async () => {
+  if (!id) return;
+
+  const { data } = await examFind(+id);
+  json.value = data.content ? JSON.parse(data.content) : [];
+};
+
+const saveExamContent = async () => {
+  if (!id) return;
+
+  await examSave({
+    id: +id,
+    content: JSON.stringify(json.value),
+  });
+
+  ElMessage.success("保存成功");
+};
+
+const onDeleteQuestion = (id: number) => {
+  json.value = json.value.filter((v) => v.id !== id);
+};
+
+onMounted(() => {
+  findExam();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -266,7 +308,6 @@ const createNewQuestion = (type: QuestionTypes) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     height: 80px;
     font-size: 30px;
     line-height: 80px;

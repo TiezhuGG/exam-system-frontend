@@ -30,6 +30,16 @@ const routes: Array<RouteRecordRaw> = [
     name: "Edit",
     component: () => import("../views/Edit/index.vue"),
   },
+  {
+    path: "/exam/:id",
+    name: "Exam",
+    component: () => import("../views/Exam/index.vue"),
+  },
+  {
+    path: "/result/:id",
+    name: "Result",
+    component: () => import("../views/Exam/Result.vue"),
+  },
 ];
 
 const router = createRouter({

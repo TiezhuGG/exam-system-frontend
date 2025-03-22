@@ -1,5 +1,7 @@
-import type { ExamAdd } from "../types/exam";
-import request from "../utils/request";
+import type { ExamAdd, ExamSave } from "../types/exam";
+import { axiosInstance } from "../utils/request";
+
+const request = axiosInstance(import.meta.env.VITE_API_EXAM_URL);
 
 export async function examList() {
   return await request.get("/exam/list");
@@ -19,4 +21,12 @@ export async function examUnPublish(id: number) {
 
 export async function examDelete(id: number) {
   return await request.delete(`/exam/delete/${id}`);
+}
+
+export async function examFind(id: number) {
+  return await request.get(`/exam/find/${id}`);
+}
+
+export async function examSave(data: ExamSave) {
+  return await request.post(`/exam/save`, data);
 }

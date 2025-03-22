@@ -12,28 +12,25 @@ interface ResponseData<T = any> {
   data: T;
 }
 
-const request: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_EXAM_URL,
-  timeout: 3000,
-});
+export const axiosInstance = (url: string) => {
+  const request: AxiosInstance = axios.create({
+    baseURL: url,
+    timeout: 3000,
+  });
 
-request.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  const requestInterceptor = (config: InternalAxiosRequestConfig) => {
     const accessToken = localStorage.getItem("token");
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
-  },
-  (error) => {
+  };
+
+  const requestErrorInterceptor = (error: any) => {
     return Promise.reject(error);
-  }
-);
+  };
 
-request.interceptors.response.use(
-  (response: AxiosResponse<ResponseData>) => {
-    console.log("response interceptor", response);
-
+  const responseInterceptor = (response: AxiosResponse<ResponseData>) => {
     const newToken = response.headers["token"];
     if (newToken) {
       localStorage.setItem("token", newToken);
@@ -44,9 +41,9 @@ request.interceptors.response.use(
     } else {
       return Promise.reject("Error");
     }
-  },
-  (error) => {
-    console.log("响应Error", error);
+  };
+
+  const responseErrorInterceptor = (error: any) => {
     if (!error.response) {
       return Promise.reject(error);
     }
@@ -62,7 +59,14 @@ request.interceptors.response.use(
     } else {
       return Promise.reject(error);
     }
-  }
-);
+  };
 
-export default request;
+  request.interceptors.request.use(requestInterceptor, requestErrorInterceptor);
+
+  request.interceptors.response.use(
+    responseInterceptor,
+    responseErrorInterceptor
+  );
+
+  return request;
+};

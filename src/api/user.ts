@@ -1,5 +1,8 @@
 import type { LoginParams, RegisterParams } from "../types/user";
-import request from "../utils/request";
+
+import { axiosInstance } from "../utils/request";
+
+const request = axiosInstance(import.meta.env.VITE_API_USER_URL);
 
 export async function login(data: LoginParams) {
   return await request.post("/user/login", data);
